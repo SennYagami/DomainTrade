@@ -1,13 +1,20 @@
 import { ethers, network } from "hardhat";
 import hre from "hardhat";
-import { seaportAddress, domainSeparatorDict, ensEthRegister, orderType } from "../constants";
+import {
+  seaportAddress,
+  domainSeparatorDict,
+  chainIdDict,
+  ensEthRegister,
+  orderType,
+  wethAddress,
+} from "../constants";
 const fs = require("fs");
 import { OrderComponents } from "../../types/type";
 import { Wallet, Contract, BigNumber } from "ethers";
-import { calculateOrderHash, getItemETH, getItem721 } from "../utils/utils";
+import { calculateOrderHash, getItemETH, getItem721, getItem20 } from "../utils/utils";
 import { toBN, toHex, randomHex, toKey } from "../utils/encodings";
 import { keccak256, parseEther, recoverAddress } from "ethers/lib/utils";
-import { chainIdOption, OfferItem, ConsiderationItem, CriteriaResolver } from "../../types/type";
+import { networkOption, OfferItem, ConsiderationItem, CriteriaResolver } from "../../types/type";
 import { json } from "hardhat/internal/core/params/argumentTypes";
 
 const getOrderHash = async (orderComponents: OrderComponents) => {
@@ -19,17 +26,24 @@ const getOrderHash = async (orderComponents: OrderComponents) => {
 const signOrder = async (
   orderComponents: OrderComponents,
   signer: Wallet | Contract,
-  chainId: chainIdOption,
+  network: networkOption,
   marketplaceContract: Contract
 ) => {
   const domainData = {
     name: "Seaport",
     version: "1.1",
-    chainId: chainId,
+    chainId: chainIdDict[network],
     verifyingContract: seaportAddress,
   };
 
   const signature = await signer._signTypedData(domainData, orderType, orderComponents);
+
+  //   const orderHash = await calculateOrderHash(orderComponents);
+
+  //   const digest = ethers.utils.keccak256(
+  //     `0x1901${domainSeparatorDict[network].slice(2)}${orderHash.slice(2)}`
+  //   );
+  //   const recoveredAddress = recoverAddress(digest, signature);
 
   return signature;
 };
@@ -45,7 +59,7 @@ async function list({
   zoneHash = ethers.constants.HashZero,
   conduitKey = ethers.constants.HashZero,
   extraCheap = false,
-  chainId = 5,
+  network = "goerli",
   marketplaceContract,
   counter,
   startTime,
@@ -62,7 +76,7 @@ async function list({
   zoneHash?: string;
   conduitKey?: string;
   extraCheap?: boolean;
-  chainId?: chainIdOption;
+  network?: networkOption;
   marketplaceContract: Contract;
   counter: BigNumber;
   startTime: number;
@@ -101,7 +115,7 @@ async function list({
     totalSize,
   };
 
-  const flatSig = await signOrder(orderComponents, offerer, chainId, marketplaceContract);
+  const flatSig = await signOrder(orderComponents, offerer, network, marketplaceContract);
 
   const order = {
     parameters: orderParameters,
@@ -137,17 +151,16 @@ async function list({
 }
 
 async function main() {
-  const [offerer, buyer] = await hre.ethers.getSigners();
+  const [maker, accepter] = await hre.ethers.getSigners();
 
   // construct seaport contract to fetch counter of user
   let seaportAbiRawdata = await fs.readFileSync("./scripts/abi/seaport.json");
   let seaportAbi = JSON.parse(seaportAbiRawdata);
   const marketplaceContract = await ethers.getContractAt(seaportAbi, seaportAddress);
-
-  const counter: BigNumber = await marketplaceContract.getCounter(offerer.address);
+  const counter: BigNumber = await marketplaceContract.getCounter(maker.address);
 
   //   network
-  const chainId = 5;
+  const network = "goerli";
 
   //   tokenId
   const rawIdentifierOrCriteria =
@@ -156,15 +169,19 @@ async function main() {
 
   //   construct offer
   const offer = [
-    getItem721({ token: ensEthRegister[chainId], identifierOrCriteria: identifierOrCriteria }),
+    getItem20({
+      token: wethAddress[network],
+      startAmount: ethers.utils.parseEther("0.01"),
+      endAmount: ethers.utils.parseEther("0.01"),
+    }),
   ];
 
   //   construct consideration
   const consideration = [
-    getItemETH({
-      startAmount: parseEther("0.01"),
-      endAmount: parseEther("0.01"),
-      recipient: offerer.address,
+    getItem721({
+      token: ensEthRegister[network],
+      identifierOrCriteria: identifierOrCriteria,
+      recipient: maker.address,
     }),
   ];
 
@@ -174,7 +191,7 @@ async function main() {
 
   //   get signed order
   const { order, orderHash, value, orderStatus, orderComponents } = await list({
-    offerer: offerer as any,
+    offerer: maker as any,
     offer,
     consideration,
     orderType: 0,
@@ -185,11 +202,11 @@ async function main() {
   });
 
   //  fullfill using signed order
-  const tx = await marketplaceContract.connect(buyer).fulfillOrder(order, toKey(0), {
+  const tx = await marketplaceContract.connect(accepter).fulfillOrder(order, toKey(0), {
     value,
   });
 
-  console.log({ offerer: offerer.address, buyer: buyer.address });
+  console.log({ offerer: maker.address, accepter: accepter.address });
   console.log({
     order: JSON.stringify(order, null, 2),
     orderHash,

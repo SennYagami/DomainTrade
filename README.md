@@ -26,9 +26,9 @@ npm install
   * Needs rpc and two wallet private keys. (one as seller one as buyer)
 
 ```Go
-npx hardhat run scripts/trade/approveEnsToSeaport.ts
-npx hardhat run scripts/trade/approveWethToSeaport.ts
-npx hardhat run scripts/trade/list.ts
-npx hardhat run scripts/trade/makeOffer.ts
-npx hardhat run scripts/trade/cancel.ts
+npx hardhat run scripts/trade/approveEnsToSeaport.ts --network goerli
+npx hardhat run scripts/trade/approveWethToSeaport.ts --network goerli
+npx hardhat run scripts/trade/list.ts --network goerli
+npx hardhat run scripts/trade/makeOffer.ts --network goerli
+npx hardhat run scripts/trade/cancel.ts --network goerli
 ```

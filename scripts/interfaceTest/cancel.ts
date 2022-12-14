@@ -1,13 +1,15 @@
 import { ethers, network } from "hardhat";
 import hre from "hardhat";
 import { seaportAddress, wethAddress } from "../constants";
-import { chainIdOption, OrderComponents } from "../../types/type";
+import { networkOption, OrderComponents } from "../../types/type";
 import { Signer, Wallet } from "ethers";
 
 const fs = require("fs");
 
 // approve owner's all ens NFT to seaport
 export async function cancelOrder(orderCLs: OrderComponents[], maker: Signer | undefined) {
+  const network: networkOption = "goerli";
+
   if (!maker) {
     [maker] = await hre.ethers.getSigners();
   }

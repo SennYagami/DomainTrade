@@ -1,0 +1,4 @@
+  const salt = ethers.constants.AddressZero;
+  counter = BigNumber.from(123);
+  startTime = 1670980904;
+  endTime = 1680980904;

@@ -1,18 +1,18 @@
 import { ethers, network } from "hardhat";
 import hre from "hardhat";
 import { seaportAddress, wethAddress } from "../constants";
-import { chainIdOption } from "../../types/type";
+import { networkOption } from "../../types/type";
 const fs = require("fs");
 
 // approve owner's all ens NFT to seaport
 async function approveWethToSeaport() {
-  const chainId: chainIdOption = 5;
+  const network: networkOption = "goerli";
 
   const [maker] = await hre.ethers.getSigners();
   let rawdata = await fs.readFileSync("./scripts/abi/weth.json");
   let abi = JSON.parse(rawdata);
 
-  const wethContract = await hre.ethers.getContractAt(abi, wethAddress[chainId]);
+  const wethContract = await hre.ethers.getContractAt(abi, wethAddress[network]);
 
   //   approve all weth to seaport
   const res = await wethContract

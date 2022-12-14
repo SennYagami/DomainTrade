@@ -43,4 +43,4 @@ export type OrderComponents = Omit<OrderParameters, "totalOriginalConsiderationI
   counter: BigNumber;
 };
 
-export type networkOption = "ethereum" | "goerli";
+export type chainIdOption = 1 | 5;

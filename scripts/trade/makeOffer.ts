@@ -1,11 +1,10 @@
-import { ethers, network } from "hardhat";
+import { ethers } from "hardhat";
 import hre from "hardhat";
 import {
   seaportAddress,
   domainSeparatorDict,
-  chainIdDict,
   ensEthRegister,
-  orderType,
+  seaportOrderType,
   wethAddress,
 } from "../constants";
 const fs = require("fs");
@@ -14,7 +13,7 @@ import { Wallet, Contract, BigNumber } from "ethers";
 import { calculateOrderHash, getItemETH, getItem721, getItem20 } from "../utils/utils";
 import { toBN, toHex, randomHex, toKey } from "../utils/encodings";
 import { keccak256, parseEther, recoverAddress } from "ethers/lib/utils";
-import { networkOption, OfferItem, ConsiderationItem, CriteriaResolver } from "../../types/type";
+import { chainIdOption, OfferItem, ConsiderationItem, CriteriaResolver } from "../../types/type";
 import { json } from "hardhat/internal/core/params/argumentTypes";
 
 const getOrderHash = async (orderComponents: OrderComponents) => {
@@ -26,17 +25,17 @@ const getOrderHash = async (orderComponents: OrderComponents) => {
 const signOrder = async (
   orderComponents: OrderComponents,
   signer: Wallet | Contract,
-  network: networkOption,
+  chainId: chainIdOption,
   marketplaceContract: Contract
 ) => {
   const domainData = {
     name: "Seaport",
     version: "1.1",
-    chainId: chainIdDict[network],
+    chainId: chainId,
     verifyingContract: seaportAddress,
   };
 
-  const signature = await signer._signTypedData(domainData, orderType, orderComponents);
+  const signature = await signer._signTypedData(domainData, seaportOrderType, orderComponents);
 
   //   const orderHash = await calculateOrderHash(orderComponents);
 
@@ -59,7 +58,7 @@ async function list({
   zoneHash = ethers.constants.HashZero,
   conduitKey = ethers.constants.HashZero,
   extraCheap = false,
-  network = "goerli",
+  chainId = 5,
   marketplaceContract,
   counter,
   startTime,
@@ -76,7 +75,7 @@ async function list({
   zoneHash?: string;
   conduitKey?: string;
   extraCheap?: boolean;
-  network?: networkOption;
+  chainId?: chainIdOption;
   marketplaceContract: Contract;
   counter: BigNumber;
   startTime: number;
@@ -115,7 +114,7 @@ async function list({
     totalSize,
   };
 
-  const flatSig = await signOrder(orderComponents, offerer, network, marketplaceContract);
+  const flatSig = await signOrder(orderComponents, offerer, chainId, marketplaceContract);
 
   const order = {
     parameters: orderParameters,
@@ -157,10 +156,11 @@ async function main() {
   let seaportAbiRawdata = await fs.readFileSync("./scripts/abi/seaport.json");
   let seaportAbi = JSON.parse(seaportAbiRawdata);
   const marketplaceContract = await ethers.getContractAt(seaportAbi, seaportAddress);
+
   const counter: BigNumber = await marketplaceContract.getCounter(maker.address);
 
   //   network
-  const network = "goerli";
+  const chainId = 5;
 
   //   tokenId
   const rawIdentifierOrCriteria =
@@ -170,7 +170,7 @@ async function main() {
   //   construct offer
   const offer = [
     getItem20({
-      token: wethAddress[network],
+      token: wethAddress[chainId],
       startAmount: ethers.utils.parseEther("0.01"),
       endAmount: ethers.utils.parseEther("0.01"),
     }),
@@ -179,7 +179,7 @@ async function main() {
   //   construct consideration
   const consideration = [
     getItem721({
-      token: ensEthRegister[network],
+      token: ensEthRegister[chainId],
       identifierOrCriteria: identifierOrCriteria,
       recipient: maker.address,
     }),
@@ -221,4 +221,6 @@ async function main() {
   console.log({ receipt });
 }
 
-main();
+main().catch((err) => {
+  console.log(err.message);
+});

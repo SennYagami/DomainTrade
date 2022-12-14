@@ -1,14 +1,21 @@
 import { ethers, network } from "hardhat";
 import hre from "hardhat";
-import { seaportAddress, domainSeparatorDict, ensEthRegister, orderType } from "../constants";
+import {
+  seaportAddress,
+  domainSeparatorDict,
+  chainIdDict,
+  ensEthRegister,
+  orderType,
+} from "../constants";
 const fs = require("fs");
 import { OrderComponents } from "../../types/type";
 import { Wallet, Contract, BigNumber } from "ethers";
 import { calculateOrderHash, getItemETH, getItem721 } from "../utils/utils";
 import { toBN, toHex, randomHex, toKey } from "../utils/encodings";
 import { keccak256, parseEther, recoverAddress } from "ethers/lib/utils";
-import { chainIdOption, OfferItem, ConsiderationItem, CriteriaResolver } from "../../types/type";
+import { networkOption, OfferItem, ConsiderationItem, CriteriaResolver } from "../../types/type";
 import { json } from "hardhat/internal/core/params/argumentTypes";
+import { cancelOrder } from "./cancel";
 
 const getOrderHash = async (orderComponents: OrderComponents) => {
   const derivedOrderHash = calculateOrderHash(orderComponents);
@@ -19,17 +26,24 @@ const getOrderHash = async (orderComponents: OrderComponents) => {
 const signOrder = async (
   orderComponents: OrderComponents,
   signer: Wallet | Contract,
-  chainId: chainIdOption,
+  network: networkOption,
   marketplaceContract: Contract
 ) => {
   const domainData = {
     name: "Seaport",
     version: "1.1",
-    chainId: chainId,
+    chainId: chainIdDict[network],
     verifyingContract: seaportAddress,
   };
 
   const signature = await signer._signTypedData(domainData, orderType, orderComponents);
+
+  //   const orderHash = await calculateOrderHash(orderComponents);
+
+  //   const digest = ethers.utils.keccak256(
+  //     `0x1901${domainSeparatorDict[network].slice(2)}${orderHash.slice(2)}`
+  //   );
+  //   const recoveredAddress = recoverAddress(digest, signature);
 
   return signature;
 };
@@ -45,7 +59,7 @@ async function list({
   zoneHash = ethers.constants.HashZero,
   conduitKey = ethers.constants.HashZero,
   extraCheap = false,
-  chainId = 5,
+  network = "goerli",
   marketplaceContract,
   counter,
   startTime,
@@ -62,7 +76,7 @@ async function list({
   zoneHash?: string;
   conduitKey?: string;
   extraCheap?: boolean;
-  chainId?: chainIdOption;
+  network?: networkOption;
   marketplaceContract: Contract;
   counter: BigNumber;
   startTime: number;
@@ -101,7 +115,7 @@ async function list({
     totalSize,
   };
 
-  const flatSig = await signOrder(orderComponents, offerer, chainId, marketplaceContract);
+  const flatSig = await signOrder(orderComponents, offerer, network, marketplaceContract);
 
   const order = {
     parameters: orderParameters,
@@ -143,20 +157,19 @@ async function main() {
   let seaportAbiRawdata = await fs.readFileSync("./scripts/abi/seaport.json");
   let seaportAbi = JSON.parse(seaportAbiRawdata);
   const marketplaceContract = await ethers.getContractAt(seaportAbi, seaportAddress);
-
   const counter: BigNumber = await marketplaceContract.getCounter(offerer.address);
 
   //   network
-  const chainId = 5;
+  const network = "goerli";
 
   //   tokenId
   const rawIdentifierOrCriteria =
-    "5552456067401538453316532186467078988369905899698674104384436431374768680926";
+    "24209082698743360307818485421364783060601168053562599309810149840881730923973";
   const identifierOrCriteria = BigNumber.from(rawIdentifierOrCriteria);
 
   //   construct offer
   const offer = [
-    getItem721({ token: ensEthRegister[chainId], identifierOrCriteria: identifierOrCriteria }),
+    getItem721({ token: ensEthRegister[network], identifierOrCriteria: identifierOrCriteria }),
   ];
 
   //   construct consideration
@@ -183,6 +196,9 @@ async function main() {
     startTime,
     endTime,
   });
+
+  //   cancel order
+  //   await cancelOrder([orderComponents], offerer);
 
   //  fullfill using signed order
   const tx = await marketplaceContract.connect(buyer).fulfillOrder(order, toKey(0), {
