@@ -257,7 +257,7 @@ async function orderComponentsContructor({
   };
 }
 
-export default async function listSignDataGetter({
+async function listSignDataGetter({
   offererAddress, //signer of offerer
   chainId, //chainId
   identifierOrCriteria, //tokenId in base 10
@@ -326,7 +326,7 @@ async function test() {
     extraData: "0x", // only used for advanced orders
   };
 
-  console.log({ signature, order });
+  console.log({ flatSig, order });
   return { order, value };
 }
 
