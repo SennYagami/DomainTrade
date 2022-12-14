@@ -251,8 +251,8 @@ async function orderComponentsContructor({
 
   return {
     orderComponents,
+    orderParameters,
     domainData,
-
     value,
   };
 }
@@ -282,7 +282,7 @@ export default async function listSignDataGetter({
   ];
 
   //   get signed order
-  const { orderComponents, domainData, value } = await orderComponentsContructor({
+  const { orderComponents, orderParameters, domainData, value } = await orderComponentsContructor({
     chainId,
     offererAddress: offererAddress,
     offer,
@@ -295,7 +295,7 @@ export default async function listSignDataGetter({
 
   const orderHash = await getOrderHash(orderComponents);
 
-  return { orderComponents, orderHash, domainData, value };
+  return { orderComponents, orderParameters, orderHash, domainData, value };
 }
 
 async function test() {
@@ -303,20 +303,31 @@ async function test() {
 
   const offerer = new ethers.Wallet(process.env.DEPLOYER, provider);
 
-  const { orderComponents, orderHash, domainData, value } = await listSignDataGetter({
-    offererAddress: offerer.address,
-    chainId: 5,
-    identifierOrCriteria:
-      "5552456067401538453316532186467078988369905899698674104384436431374768680926",
-    etherAmount: 0.01,
-    counter: 5,
-    startTime: 1670980560,
-    endTime: 1670990560,
-  });
+  const { orderComponents, orderParameters, orderHash, domainData, value } =
+    await listSignDataGetter({
+      offererAddress: offerer.address,
+      chainId: 5,
+      identifierOrCriteria:
+        "5552456067401538453316532186467078988369905899698674104384436431374768680926",
+      etherAmount: 0.01,
+      counter: 5,
+      startTime: 1670980560,
+      endTime: 1670990560,
+    });
 
-  const signature = await offerer._signTypedData(domainData, seaportOrderType, orderComponents);
+  const flatSig = await offerer._signTypedData(domainData, seaportOrderType, orderComponents);
 
-  console.log({ signature });
+  const order = {
+    parameters: orderParameters,
+    // signature: !extraCheap ? flatSig : convertSignatureToEIP2098(flatSig),
+    signature: flatSig,
+    numerator: 1, // only used for advanced orders
+    denominator: 1, // only used for advanced orders
+    extraData: "0x", // only used for advanced orders
+  };
+
+  console.log({ signature, order });
+  return { order, value };
 }
 
 test();
