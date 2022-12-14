@@ -8,17 +8,10 @@ const { randomBytes } = require("crypto");
 const { BigNumber } = require("ethers");
 
 const seaportAddress = "0x00000000006c3852cbef3e08e8df289169ede581";
-const domainSeparatorDict = {
-  1: "0x712fdde1f147adcbb0fabb1aeb9c2d317530a46d266db095bc40c606fe94f0c2",
-  5: "0xb50c8913581289bd2e066aeef89fceb9615d490d673131fd1a7047436706834e",
-};
+
 const ensEthRegister = {
   5: "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85",
   1: "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85",
-};
-const wethAddress = {
-  5: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
-  1: "",
 };
 
 const seaportOrderType = {
