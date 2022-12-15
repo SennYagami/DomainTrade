@@ -81,8 +81,21 @@ const getItemETH = ({ startAmount, endAmount, recipient }) =>
 const getItem20 = ({ token, startAmount, endAmount, recipient }) =>
   getOfferOrConsiderationItem(1, token, 0, startAmount, endAmount, recipient);
 
-const getItem721 = ({ token, identifierOrCriteria, startAmount = 1, endAmount = 1, recipient }) =>
-  getOfferOrConsiderationItem(2, token, identifierOrCriteria, startAmount, endAmount, recipient);
+const getItem721 = ({
+  token,
+  identifierOrCriteria,
+  startAmount = 1,
+  endAmount = 1,
+  recipient,
+}) =>
+  getOfferOrConsiderationItem(
+    2,
+    token,
+    identifierOrCriteria,
+    startAmount,
+    endAmount,
+    recipient
+  );
 
 const getOfferOrConsiderationItem = (
   itemType = 0,
@@ -119,7 +132,9 @@ const calculateOrderHash = (orderComponents) => {
   const orderTypeString = `${orderComponentsPartialTypeString}${considerationItemTypeString}${offerItemTypeString}`;
 
   const offerItemTypeHash = keccak256(toUtf8Bytes(offerItemTypeString));
-  const considerationItemTypeHash = keccak256(toUtf8Bytes(considerationItemTypeString));
+  const considerationItemTypeHash = keccak256(
+    toUtf8Bytes(considerationItemTypeString)
+  );
   const orderTypeHash = keccak256(toUtf8Bytes(orderTypeString));
 
   const offerHash = keccak256(
@@ -132,9 +147,18 @@ const calculateOrderHash = (orderComponents) => {
                 offerItemTypeHash.slice(2),
                 offerItem.itemType.toString().padStart(64, "0"),
                 offerItem.token.slice(2).padStart(64, "0"),
-                toBN(offerItem.identifierOrCriteria).toHexString().slice(2).padStart(64, "0"),
-                toBN(offerItem.startAmount).toHexString().slice(2).padStart(64, "0"),
-                toBN(offerItem.endAmount).toHexString().slice(2).padStart(64, "0"),
+                toBN(offerItem.identifierOrCriteria)
+                  .toHexString()
+                  .slice(2)
+                  .padStart(64, "0"),
+                toBN(offerItem.startAmount)
+                  .toHexString()
+                  .slice(2)
+                  .padStart(64, "0"),
+                toBN(offerItem.endAmount)
+                  .toHexString()
+                  .slice(2)
+                  .padStart(64, "0"),
               ].join("")
           ).slice(2);
         })
@@ -155,8 +179,14 @@ const calculateOrderHash = (orderComponents) => {
                   .toHexString()
                   .slice(2)
                   .padStart(64, "0"),
-                toBN(considerationItem.startAmount).toHexString().slice(2).padStart(64, "0"),
-                toBN(considerationItem.endAmount).toHexString().slice(2).padStart(64, "0"),
+                toBN(considerationItem.startAmount)
+                  .toHexString()
+                  .slice(2)
+                  .padStart(64, "0"),
+                toBN(considerationItem.endAmount)
+                  .toHexString()
+                  .slice(2)
+                  .padStart(64, "0"),
                 considerationItem.recipient.slice(2).padStart(64, "0"),
               ].join("")
           ).slice(2);
@@ -173,7 +203,10 @@ const calculateOrderHash = (orderComponents) => {
         offerHash.slice(2),
         considerationHash.slice(2),
         orderComponents.orderType.toString().padStart(64, "0"),
-        toBN(orderComponents.startTime).toHexString().slice(2).padStart(64, "0"),
+        toBN(orderComponents.startTime)
+          .toHexString()
+          .slice(2)
+          .padStart(64, "0"),
         toBN(orderComponents.endTime).toHexString().slice(2).padStart(64, "0"),
         orderComponents.zoneHash.slice(2),
         orderComponents.salt.slice(2).padStart(64, "0"),
@@ -231,13 +264,21 @@ async function orderComponentsContructor({
 
   const value = offer
     .map((x) =>
-      x.itemType === 0 ? (x.endAmount.gt(x.startAmount) ? x.endAmount : x.startAmount) : toBN(0)
+      x.itemType === 0
+        ? x.endAmount.gt(x.startAmount)
+          ? x.endAmount
+          : x.startAmount
+        : toBN(0)
     )
     .reduce((a, b) => a.add(b), toBN(0))
     .add(
       consideration
         .map((x) =>
-          x.itemType === 0 ? (x.endAmount.gt(x.startAmount) ? x.endAmount : x.startAmount) : toBN(0)
+          x.itemType === 0
+            ? x.endAmount.gt(x.startAmount)
+              ? x.endAmount
+              : x.startAmount
+            : toBN(0)
         )
         .reduce((a, b) => a.add(b), toBN(0))
     );
@@ -269,7 +310,10 @@ async function listSignDataGetter({
   identifierOrCriteria = BigNumber.from(identifierOrCriteria);
   //   construct offer
   const offer = [
-    getItem721({ token: ensEthRegister[chainId], identifierOrCriteria: identifierOrCriteria }),
+    getItem721({
+      token: ensEthRegister[chainId],
+      identifierOrCriteria: identifierOrCriteria,
+    }),
   ];
 
   //   construct consideration
@@ -282,16 +326,17 @@ async function listSignDataGetter({
   ];
 
   //   get signed order
-  const { orderComponents, orderParameters, domainData, value } = await orderComponentsContructor({
-    chainId,
-    offererAddress: offererAddress,
-    offer,
-    consideration,
-    orderType: 0,
-    counter: BigNumber.from(counter),
-    startTime,
-    endTime,
-  });
+  const { orderComponents, orderParameters, domainData, value } =
+    await orderComponentsContructor({
+      chainId,
+      offererAddress: offererAddress,
+      offer,
+      consideration,
+      orderType: 0,
+      counter: BigNumber.from(counter),
+      startTime,
+      endTime,
+    });
 
   const orderHash = await getOrderHash(orderComponents);
 
@@ -299,7 +344,7 @@ async function listSignDataGetter({
 }
 
 async function test() {
-  const provider = new ethers.getDefaultProvider();
+  const provider = new ethers.getDefaultProvider("goerli");
 
   const offerer = new ethers.Wallet(process.env.DEPLOYER, provider);
 
@@ -315,7 +360,11 @@ async function test() {
       endTime: 1670990560,
     });
 
-  const flatSig = await offerer._signTypedData(domainData, seaportOrderType, orderComponents);
+  const flatSig = await offerer._signTypedData(
+    domainData,
+    seaportOrderType,
+    orderComponents
+  );
 
   const order = {
     parameters: orderParameters,
@@ -327,7 +376,17 @@ async function test() {
   };
 
   console.log({ flatSig, order });
-  return { order, value };
+  //   return { order, value };
+
+  //   let ABI = await fs.readFileSync("./interface/abi/seaport.json");
+  //   let abi = JSON.parse(ABI);
+  //   const seaport = new ethers.Contract(seaportAddress, abi, offerer);
+  //   const res = await seaport.fulfillOrder(order, toKey(0), {
+  //     value: value, // MUST be a string passed into parseEther
+  //     gasLimit: 250000,
+  //     // gasPrice: provider.getGasPrice().         // MAY be a number or a Promise
+  //   });
+  //   console.log({ res });
 }
 
 test();
