@@ -1,6 +1,12 @@
 import { ethers, network } from "hardhat";
 import hre from "hardhat";
-import { seaportAddress, domainSeparatorDict, ensEthRegister, orderType } from "../constants";
+import {
+  seaportAddress,
+  domainSeparatorDict,
+  ensEthRegister,
+  orderType,
+  seaportOrderType,
+} from "../constants";
 const fs = require("fs");
 import { OrderComponents } from "../../types/type";
 import { Wallet, Contract, BigNumber } from "ethers";
@@ -29,7 +35,7 @@ const signOrder = async (
     verifyingContract: seaportAddress,
   };
 
-  const signature = await signer._signTypedData(domainData, orderType, orderComponents);
+  const signature = await signer._signTypedData(domainData, seaportOrderType, orderComponents);
 
   return signature;
 };
@@ -137,7 +143,7 @@ async function list({
 }
 
 async function main() {
-  const [offerer, buyer] = await hre.ethers.getSigners();
+  const [offerer, buyer, platform] = await hre.ethers.getSigners();
 
   // construct seaport contract to fetch counter of user
   let seaportAbiRawdata = await fs.readFileSync("./scripts/abi/seaport.json");
@@ -151,7 +157,7 @@ async function main() {
 
   //   tokenId
   const rawIdentifierOrCriteria =
-    "5552456067401538453316532186467078988369905899698674104384436431374768680926";
+    "27539411578306876369171611114967280087586888077525747927824545951054847386210";
   const identifierOrCriteria = BigNumber.from(rawIdentifierOrCriteria);
 
   //   construct offer
@@ -162,9 +168,14 @@ async function main() {
   //   construct consideration
   const consideration = [
     getItemETH({
+      startAmount: parseEther("0.05"),
+      endAmount: parseEther("0.05"),
+      recipient: offerer.address,
+    }),
+    getItemETH({
       startAmount: parseEther("0.01"),
       endAmount: parseEther("0.01"),
-      recipient: offerer.address,
+      recipient: platform.address,
     }),
   ];
 
