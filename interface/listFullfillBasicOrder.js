@@ -218,12 +218,7 @@ const calculateOrderHash = (orderComponents) => {
   return derivedOrderHash;
 };
 
-const getOrderHash = async (orderComponents) => {
-  const derivedOrderHash = calculateOrderHash(orderComponents);
-  return derivedOrderHash;
-};
-
-export const getBasicOrderParameters = (
+const getBasicOrderParameters = (
   basicOrderRouteType,
   order,
   fulfillerConduitKey = false,
@@ -258,6 +253,11 @@ export const getBasicOrderParameters = (
     ...tips,
   ],
 });
+
+const getOrderHash = async (orderComponents) => {
+  const derivedOrderHash = calculateOrderHash(orderComponents);
+  return derivedOrderHash;
+};
 
 // sign to list ens
 async function orderComponentsContructor({
@@ -326,12 +326,7 @@ async function orderComponentsContructor({
     verifyingContract: seaportAddress,
   };
 
-  return {
-    orderComponents,
-    orderParameters,
-    domainData,
-    value,
-  };
+  return { orderComponents, orderParameters, domainData, value };
 }
 
 async function listSignDataGetter({
@@ -376,20 +371,14 @@ async function listSignDataGetter({
 
   const orderHash = await getOrderHash(orderComponents);
 
-  getBasicOrderParameters(
-    0,
-    order
-    // EthForERC721
-  );
   return { orderComponents, orderParameters, orderHash, domainData, value };
 }
 
 async function test() {
   const provider = new ethers.getDefaultProvider("goerli");
-
   const offerer = new ethers.Wallet(process.env.DEPLOYER, provider);
 
-  const { orderComponents, orderParameters, orderHash, domainData, value } =
+  const { orderComponents, orderParameters, domainData, orderHash, value } =
     await listSignDataGetter({
       offererAddress: offerer.address,
       chainId: 5,
@@ -416,8 +405,15 @@ async function test() {
     extraData: "0x", // only used for advanced orders
   };
 
-  console.log({ flatSig, order });
-  //   return { order, value };
+  const basicOrderParameters = getBasicOrderParameters(
+    0, // EthForERC721
+    order
+  );
+
+  console.log({ flatSig, order, value });
+
+  //   this is values to call fulfillBasicOrder
+  return { value, basicOrderParameters };
 
   //   let ABI = await fs.readFileSync("./interface/abi/seaport.json");
   //   let abi = JSON.parse(ABI);
