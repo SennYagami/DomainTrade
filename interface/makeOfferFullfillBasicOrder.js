@@ -3,7 +3,12 @@ const ethers = require("ethers");
 const fs = require("fs");
 require("dotenv").config();
 
-const { keccak256, parseEther, toUtf8Bytes } = require("ethers/lib/utils");
+const {
+  keccak256,
+  parseEther,
+  toUtf8Bytes,
+  parseUnits,
+} = require("ethers/lib/utils");
 const { randomBytes } = require("crypto");
 const { BigNumber } = require("ethers");
 
@@ -218,12 +223,7 @@ const calculateOrderHash = (orderComponents) => {
   return derivedOrderHash;
 };
 
-const getOrderHash = async (orderComponents) => {
-  const derivedOrderHash = calculateOrderHash(orderComponents);
-  return derivedOrderHash;
-};
-
-export const getBasicOrderParameters = (
+const getBasicOrderParameters = (
   basicOrderRouteType,
   order,
   fulfillerConduitKey = false,
@@ -259,6 +259,11 @@ export const getBasicOrderParameters = (
   ],
 });
 
+const getOrderHash = async (orderComponents) => {
+  const derivedOrderHash = calculateOrderHash(orderComponents);
+  return derivedOrderHash;
+};
+
 // sign to list ens
 async function orderComponentsContructor({
   offererAddress,
@@ -275,7 +280,10 @@ async function orderComponentsContructor({
   startTime,
   endTime,
 }) {
-  const salt = !extraCheap ? randomHex() : ethers.constants.HashZero;
+  //   const salt = !extraCheap ? randomHex() : ethers.constants.HashZero;
+  salt = ethers.constants.HashZero;
+  startTime = 1671369434;
+  endTime = 1671379434;
 
   const orderParameters = {
     offerer: offererAddress,
@@ -326,37 +334,36 @@ async function orderComponentsContructor({
     verifyingContract: seaportAddress,
   };
 
-  return {
-    orderComponents,
-    orderParameters,
-    domainData,
-    value,
-  };
+  return { orderComponents, orderParameters, domainData, value };
 }
 
-async function listSignDataGetter({
+async function makeOfferSignDataGetter({
   offererAddress, //signer of offerer
   chainId, //chainId
   identifierOrCriteria, //tokenId in base 10
-  etherAmount, //ether based price
+  erc20Address = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6", // goerli network weth address
+  erc20Amount, //ether based price
+  erc20Decimal = 18, //weth decimal
   counter, //seaport's counter of offerer, get from backend
   startTime, //startTime of order, need to be integer with 10 digits
   endTime, //endTime of order, need to be integer with 10 digits
 }) {
   identifierOrCriteria = BigNumber.from(identifierOrCriteria);
+
   //   construct offer
   const offer = [
-    getItem721({
-      token: ensEthRegister[chainId],
-      identifierOrCriteria: identifierOrCriteria,
+    getItem20({
+      token: erc20Address,
+      startAmount: parseUnits(erc20Amount.toString(), erc20Decimal),
+      endAmount: parseUnits(erc20Amount.toString(), erc20Decimal),
     }),
   ];
 
   //   construct consideration
   const consideration = [
-    getItemETH({
-      startAmount: parseEther(etherAmount.toString()),
-      endAmount: parseEther(etherAmount.toString()),
+    getItem721({
+      token: ensEthRegister[chainId],
+      identifierOrCriteria: identifierOrCriteria,
       recipient: offererAddress,
     }),
   ];
@@ -376,26 +383,20 @@ async function listSignDataGetter({
 
   const orderHash = await getOrderHash(orderComponents);
 
-  getBasicOrderParameters(
-    0,
-    order
-    // EthForERC721
-  );
   return { orderComponents, orderParameters, orderHash, domainData, value };
 }
 
 async function test() {
   const provider = new ethers.getDefaultProvider("goerli");
-
   const offerer = new ethers.Wallet(process.env.DEPLOYER, provider);
 
-  const { orderComponents, orderParameters, orderHash, domainData, value } =
-    await listSignDataGetter({
+  const { orderComponents, orderParameters, domainData, orderHash, value } =
+    await makeOfferSignDataGetter({
       offererAddress: offerer.address,
       chainId: 5,
       identifierOrCriteria:
         "69795268980990706471111358049403619171590773124827335588749202653893061835756",
-      etherAmount: 0.01,
+      erc20Amount: 0.03,
       counter: 5,
       startTime: 1670980560,
       endTime: 1670990560,
@@ -416,18 +417,15 @@ async function test() {
     extraData: "0x", // only used for advanced orders
   };
 
-  console.log({ flatSig, order });
-  //   return { order, value };
+  const basicOrderParameters = getBasicOrderParameters(
+    0, // EthForERC721
+    order
+  );
 
-  //   let ABI = await fs.readFileSync("./interface/abi/seaport.json");
-  //   let abi = JSON.parse(ABI);
-  //   const seaport = new ethers.Contract(seaportAddress, abi, offerer);
-  //   const res = await seaport.fulfillOrder(order, toKey(0), {
-  //     value: value, // MUST be a string passed into parseEther
-  //     gasLimit: 250000,
-  //     // gasPrice: provider.getGasPrice().         // MAY be a number or a Promise
-  //   });
-  //   console.log({ res });
+  console.log({ flatSig, order, value });
+
+  //   this is values to call fulfillBasicOrder
+  return { value, basicOrderParameters };
 }
 
 test();

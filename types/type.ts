@@ -44,3 +44,38 @@ export type OrderComponents = Omit<OrderParameters, "totalOriginalConsiderationI
 };
 
 export type chainIdOption = 1 | 5;
+
+
+
+export type Order = {
+    parameters: OrderParameters;
+    signature: string;
+  };
+  
+
+export type BasicOrderParameters = {
+considerationToken: string;
+considerationIdentifier: BigNumber;
+considerationAmount: BigNumber;
+offerer: string;
+zone: string;
+offerToken: string;
+offerIdentifier: BigNumber;
+offerAmount: BigNumber;
+basicOrderType: number;
+startTime: string | BigNumber | number;
+endTime: string | BigNumber | number;
+zoneHash: string;
+salt: string;
+offererConduitKey: string;
+fulfillerConduitKey: string;
+totalOriginalAdditionalRecipients: BigNumber;
+additionalRecipients: AdditionalRecipient[];
+signature: string;
+};
+
+
+export type AdditionalRecipient = {
+    amount: BigNumber;
+    recipient: string;
+  };

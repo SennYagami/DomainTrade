@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
-import { BigNumberish } from "ethers";
-import { toBN } from "./encodings";
-import { OrderComponents, ConsiderationItem, OfferItem } from "../../types/type";
+import { BigNumber, BigNumberish } from "ethers";
+import { toBN, toKey } from "./encodings";
+import { OrderComponents, ConsiderationItem, OfferItem, Order, BasicOrderParameters } from "../../types/type";
 
 export const getItemETH = ({
   startAmount,
@@ -149,3 +149,40 @@ export const calculateOrderHash = (orderComponents: OrderComponents) => {
 
   return derivedOrderHash;
 };
+
+
+export const getBasicOrderParameters = (
+    basicOrderRouteType: number,
+    order: Order,
+    fulfillerConduitKey: string | boolean = false,
+    tips: { amount: BigNumber; recipient: string }[] = []
+  ): BasicOrderParameters => ({
+    offerer: order.parameters.offerer,
+    zone: order.parameters.zone,
+    basicOrderType: order.parameters.orderType + 4 * basicOrderRouteType,
+    offerToken: order.parameters.offer[0].token,
+    offerIdentifier: order.parameters.offer[0].identifierOrCriteria,
+    offerAmount: order.parameters.offer[0].endAmount,
+    considerationToken: order.parameters.consideration[0].token,
+    considerationIdentifier:
+      order.parameters.consideration[0].identifierOrCriteria,
+    considerationAmount: order.parameters.consideration[0].endAmount,
+    startTime: order.parameters.startTime,
+    endTime: order.parameters.endTime,
+    zoneHash: order.parameters.zoneHash,
+    salt: order.parameters.salt,
+    totalOriginalAdditionalRecipients: BigNumber.from(
+      order.parameters.consideration.length - 1
+    ),
+    signature: order.signature,
+    offererConduitKey: order.parameters.conduitKey,
+    fulfillerConduitKey: toKey(
+      typeof fulfillerConduitKey === "string" ? fulfillerConduitKey : 0
+    ),
+    additionalRecipients: [
+      ...order.parameters.consideration
+        .slice(1)
+        .map(({ endAmount, recipient }) => ({ amount: endAmount, recipient })),
+      ...tips,
+    ],
+  });
