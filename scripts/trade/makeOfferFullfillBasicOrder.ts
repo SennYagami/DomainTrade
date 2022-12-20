@@ -215,6 +215,7 @@ async function main() {
     endTime,
   });
 
+//   provide ERC721 to get offered erc20
   const basicOrderParameters =getBasicOrderParameters(4,order)
 
   //  fullfill using signed order

@@ -418,7 +418,7 @@ async function test() {
   };
 
   const basicOrderParameters = getBasicOrderParameters(
-    0, // EthForERC721
+    4, // provide ERC721 to get offered ERC20
     order
   );
 

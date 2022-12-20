@@ -204,7 +204,7 @@ async function main() {
     endTime,
   });
 
-
+//   provide Eth to get offered ERC721
   const  basicOrderParameters = getBasicOrderParameters(0, // EthForERC721
   order)
 
