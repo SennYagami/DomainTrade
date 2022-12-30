@@ -2602,7 +2602,6 @@ seaportABI = [
 const seaportAddress = "0x00000000006c3852cbef3e08e8df289169ede581";
 
 async function cancelOrder(signer, orderComponentsLs) {
-  const value = ethers.BigNumber.from(value);
   const seaport = new ethers.Contract(seaportAddress, seaportABI, signer);
 
   const res = await seaport.cancel(orderComponentsLs, {
