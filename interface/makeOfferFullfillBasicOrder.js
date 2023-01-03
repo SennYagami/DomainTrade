@@ -280,10 +280,7 @@ async function orderComponentsContructor({
   startTime,
   endTime,
 }) {
-  //   const salt = !extraCheap ? randomHex() : ethers.constants.HashZero;
-  salt = ethers.constants.HashZero;
-  startTime = 1671369434;
-  endTime = 1671379434;
+  const salt = !extraCheap ? randomHex() : ethers.constants.HashZero;
 
   const orderParameters = {
     offerer: offererAddress,
