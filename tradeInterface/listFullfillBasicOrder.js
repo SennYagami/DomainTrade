@@ -2,6 +2,7 @@ const ethers = require("ethers");
 
 const fs = require("fs");
 require("dotenv").config();
+let jsonFile = require("jsonfile");
 
 const { keccak256, parseEther, toUtf8Bytes } = require("ethers/lib/utils");
 const { randomBytes } = require("crypto");
@@ -371,6 +372,11 @@ async function listSignDataGetter({
 
   const orderHash = await getOrderHash(orderComponents);
 
+  //   console.log({
+  //     orderComponents: JSON.stringify(orderComponents, null, 2),
+  //     orderHash,
+  //   });
+
   return { orderComponents, orderParameters, orderHash, domainData, value };
 }
 
@@ -410,7 +416,7 @@ async function test() {
     order
   );
 
-  console.log({ flatSig, order, value });
+  console.log({ orderHash, flatSig, order, value });
 
   //   this is values to call fulfillBasicOrder
   return { value, basicOrderParameters };
