@@ -81,21 +81,8 @@ const getItemETH = ({ startAmount, endAmount, recipient }) =>
 const getItem20 = ({ token, startAmount, endAmount, recipient }) =>
   getOfferOrConsiderationItem(1, token, 0, startAmount, endAmount, recipient);
 
-const getItem721 = ({
-  token,
-  identifierOrCriteria,
-  startAmount = 1,
-  endAmount = 1,
-  recipient,
-}) =>
-  getOfferOrConsiderationItem(
-    2,
-    token,
-    identifierOrCriteria,
-    startAmount,
-    endAmount,
-    recipient
-  );
+const getItem721 = ({ token, identifierOrCriteria, startAmount = 1, endAmount = 1, recipient }) =>
+  getOfferOrConsiderationItem(2, token, identifierOrCriteria, startAmount, endAmount, recipient);
 
 const getOfferOrConsiderationItem = (
   itemType = 0,
@@ -132,9 +119,7 @@ const calculateOrderHash = (orderComponents) => {
   const orderTypeString = `${orderComponentsPartialTypeString}${considerationItemTypeString}${offerItemTypeString}`;
 
   const offerItemTypeHash = keccak256(toUtf8Bytes(offerItemTypeString));
-  const considerationItemTypeHash = keccak256(
-    toUtf8Bytes(considerationItemTypeString)
-  );
+  const considerationItemTypeHash = keccak256(toUtf8Bytes(considerationItemTypeString));
   const orderTypeHash = keccak256(toUtf8Bytes(orderTypeString));
 
   const offerHash = keccak256(
@@ -147,18 +132,9 @@ const calculateOrderHash = (orderComponents) => {
                 offerItemTypeHash.slice(2),
                 offerItem.itemType.toString().padStart(64, "0"),
                 offerItem.token.slice(2).padStart(64, "0"),
-                toBN(offerItem.identifierOrCriteria)
-                  .toHexString()
-                  .slice(2)
-                  .padStart(64, "0"),
-                toBN(offerItem.startAmount)
-                  .toHexString()
-                  .slice(2)
-                  .padStart(64, "0"),
-                toBN(offerItem.endAmount)
-                  .toHexString()
-                  .slice(2)
-                  .padStart(64, "0"),
+                toBN(offerItem.identifierOrCriteria).toHexString().slice(2).padStart(64, "0"),
+                toBN(offerItem.startAmount).toHexString().slice(2).padStart(64, "0"),
+                toBN(offerItem.endAmount).toHexString().slice(2).padStart(64, "0"),
               ].join("")
           ).slice(2);
         })
@@ -179,14 +155,8 @@ const calculateOrderHash = (orderComponents) => {
                   .toHexString()
                   .slice(2)
                   .padStart(64, "0"),
-                toBN(considerationItem.startAmount)
-                  .toHexString()
-                  .slice(2)
-                  .padStart(64, "0"),
-                toBN(considerationItem.endAmount)
-                  .toHexString()
-                  .slice(2)
-                  .padStart(64, "0"),
+                toBN(considerationItem.startAmount).toHexString().slice(2).padStart(64, "0"),
+                toBN(considerationItem.endAmount).toHexString().slice(2).padStart(64, "0"),
                 considerationItem.recipient.slice(2).padStart(64, "0"),
               ].join("")
           ).slice(2);
@@ -203,10 +173,7 @@ const calculateOrderHash = (orderComponents) => {
         offerHash.slice(2),
         considerationHash.slice(2),
         orderComponents.orderType.toString().padStart(64, "0"),
-        toBN(orderComponents.startTime)
-          .toHexString()
-          .slice(2)
-          .padStart(64, "0"),
+        toBN(orderComponents.startTime).toHexString().slice(2).padStart(64, "0"),
         toBN(orderComponents.endTime).toHexString().slice(2).padStart(64, "0"),
         orderComponents.zoneHash.slice(2),
         orderComponents.salt.slice(2).padStart(64, "0"),
@@ -236,21 +203,16 @@ export const getBasicOrderParameters = (
   offerIdentifier: order.parameters.offer[0].identifierOrCriteria,
   offerAmount: order.parameters.offer[0].endAmount,
   considerationToken: order.parameters.consideration[0].token,
-  considerationIdentifier:
-    order.parameters.consideration[0].identifierOrCriteria,
+  considerationIdentifier: order.parameters.consideration[0].identifierOrCriteria,
   considerationAmount: order.parameters.consideration[0].endAmount,
   startTime: order.parameters.startTime,
   endTime: order.parameters.endTime,
   zoneHash: order.parameters.zoneHash,
   salt: order.parameters.salt,
-  totalOriginalAdditionalRecipients: BigNumber.from(
-    order.parameters.consideration.length - 1
-  ),
+  totalOriginalAdditionalRecipients: BigNumber.from(order.parameters.consideration.length - 1),
   signature: order.signature,
   offererConduitKey: order.parameters.conduitKey,
-  fulfillerConduitKey: toKey(
-    typeof fulfillerConduitKey === "string" ? fulfillerConduitKey : 0
-  ),
+  fulfillerConduitKey: toKey(typeof fulfillerConduitKey === "string" ? fulfillerConduitKey : 0),
   additionalRecipients: [
     ...order.parameters.consideration
       .slice(1)
@@ -300,21 +262,13 @@ async function orderComponentsContructor({
 
   const value = offer
     .map((x) =>
-      x.itemType === 0
-        ? x.endAmount.gt(x.startAmount)
-          ? x.endAmount
-          : x.startAmount
-        : toBN(0)
+      x.itemType === 0 ? (x.endAmount.gt(x.startAmount) ? x.endAmount : x.startAmount) : toBN(0)
     )
     .reduce((a, b) => a.add(b), toBN(0))
     .add(
       consideration
         .map((x) =>
-          x.itemType === 0
-            ? x.endAmount.gt(x.startAmount)
-              ? x.endAmount
-              : x.startAmount
-            : toBN(0)
+          x.itemType === 0 ? (x.endAmount.gt(x.startAmount) ? x.endAmount : x.startAmount) : toBN(0)
         )
         .reduce((a, b) => a.add(b), toBN(0))
     );
@@ -362,17 +316,16 @@ async function listSignDataGetter({
   ];
 
   //   get signed order
-  const { orderComponents, orderParameters, domainData, value } =
-    await orderComponentsContructor({
-      chainId,
-      offererAddress: offererAddress,
-      offer,
-      consideration,
-      orderType: 0,
-      counter: BigNumber.from(counter),
-      startTime,
-      endTime,
-    });
+  const { orderComponents, orderParameters, domainData, value } = await orderComponentsContructor({
+    chainId,
+    offererAddress: offererAddress,
+    offer,
+    consideration,
+    orderType: 0,
+    counter: BigNumber.from(counter),
+    startTime,
+    endTime,
+  });
 
   const orderHash = await getOrderHash(orderComponents);
 
@@ -401,11 +354,7 @@ async function test() {
       endTime: 1670990560,
     });
 
-  const flatSig = await offerer._signTypedData(
-    domainData,
-    seaportOrderType,
-    orderComponents
-  );
+  const flatSig = await offerer._signTypedData(domainData, seaportOrderType, orderComponents);
 
   const order = {
     parameters: orderParameters,

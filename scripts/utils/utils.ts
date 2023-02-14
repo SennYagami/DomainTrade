@@ -2,7 +2,13 @@ import { ethers } from "hardhat";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import { BigNumber, BigNumberish } from "ethers";
 import { toBN, toKey } from "./encodings";
-import { OrderComponents, ConsiderationItem, OfferItem, Order, BasicOrderParameters } from "../../types/type";
+import {
+  OrderComponents,
+  ConsiderationItem,
+  OfferItem,
+  Order,
+  BasicOrderParameters,
+} from "../../types/type";
 
 export const getItemETH = ({
   startAmount,
@@ -48,6 +54,21 @@ export const getItem721 = ({
   recipient?: string;
 }) =>
   getOfferOrConsiderationItem(2, token, identifierOrCriteria, startAmount, endAmount, recipient);
+
+export const getItem1155 = ({
+  token,
+  identifierOrCriteria,
+  startAmount,
+  endAmount,
+  recipient,
+}: {
+  token: string;
+  identifierOrCriteria: BigNumberish;
+  startAmount?: BigNumberish;
+  endAmount?: BigNumberish;
+  recipient?: string;
+}) =>
+  getOfferOrConsiderationItem(3, token, identifierOrCriteria, startAmount, endAmount, recipient);
 
 export const getOfferOrConsiderationItem = <RecipientType extends string | undefined = undefined>(
   itemType: number = 0,
@@ -150,39 +171,33 @@ export const calculateOrderHash = (orderComponents: OrderComponents) => {
   return derivedOrderHash;
 };
 
-
 export const getBasicOrderParameters = (
-    basicOrderRouteType: number,
-    order: Order,
-    fulfillerConduitKey: string | boolean = false,
-    tips: { amount: BigNumber; recipient: string }[] = []
-  ): BasicOrderParameters => ({
-    offerer: order.parameters.offerer,
-    zone: order.parameters.zone,
-    basicOrderType: order.parameters.orderType + 4 * basicOrderRouteType,
-    offerToken: order.parameters.offer[0].token,
-    offerIdentifier: order.parameters.offer[0].identifierOrCriteria,
-    offerAmount: order.parameters.offer[0].endAmount,
-    considerationToken: order.parameters.consideration[0].token,
-    considerationIdentifier:
-      order.parameters.consideration[0].identifierOrCriteria,
-    considerationAmount: order.parameters.consideration[0].endAmount,
-    startTime: order.parameters.startTime,
-    endTime: order.parameters.endTime,
-    zoneHash: order.parameters.zoneHash,
-    salt: order.parameters.salt,
-    totalOriginalAdditionalRecipients: BigNumber.from(
-      order.parameters.consideration.length - 1
-    ),
-    signature: order.signature,
-    offererConduitKey: order.parameters.conduitKey,
-    fulfillerConduitKey: toKey(
-      typeof fulfillerConduitKey === "string" ? fulfillerConduitKey : 0
-    ),
-    additionalRecipients: [
-      ...order.parameters.consideration
-        .slice(1)
-        .map(({ endAmount, recipient }) => ({ amount: endAmount, recipient })),
-      ...tips,
-    ],
-  });
+  basicOrderRouteType: number,
+  order: Order,
+  fulfillerConduitKey: string | boolean = false,
+  tips: { amount: BigNumber; recipient: string }[] = []
+): BasicOrderParameters => ({
+  offerer: order.parameters.offerer,
+  zone: order.parameters.zone,
+  basicOrderType: order.parameters.orderType + 4 * basicOrderRouteType,
+  offerToken: order.parameters.offer[0].token,
+  offerIdentifier: order.parameters.offer[0].identifierOrCriteria,
+  offerAmount: order.parameters.offer[0].endAmount,
+  considerationToken: order.parameters.consideration[0].token,
+  considerationIdentifier: order.parameters.consideration[0].identifierOrCriteria,
+  considerationAmount: order.parameters.consideration[0].endAmount,
+  startTime: order.parameters.startTime,
+  endTime: order.parameters.endTime,
+  zoneHash: order.parameters.zoneHash,
+  salt: order.parameters.salt,
+  totalOriginalAdditionalRecipients: BigNumber.from(order.parameters.consideration.length - 1),
+  signature: order.signature,
+  offererConduitKey: order.parameters.conduitKey,
+  fulfillerConduitKey: toKey(typeof fulfillerConduitKey === "string" ? fulfillerConduitKey : 0),
+  additionalRecipients: [
+    ...order.parameters.consideration
+      .slice(1)
+      .map(({ endAmount, recipient }) => ({ amount: endAmount, recipient })),
+    ...tips,
+  ],
+});

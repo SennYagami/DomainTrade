@@ -206,7 +206,7 @@ async function main() {
     orderHash,
     value,
     orderStatus,
-    orderComponents,
+    orderComponents: JSON.stringify(order),
   });
   console.log({ tx });
 
