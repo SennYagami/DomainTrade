@@ -196,9 +196,9 @@ async function main() {
   });
 
   //  fullfill using signed order
-  const tx = await marketplaceContract.connect(buyer).fulfillOrder(order, toKey(0), {
-    value,
-  });
+  //   const tx = await marketplaceContract.connect(buyer).fulfillOrder(order, toKey(0), {
+  //     value,
+  //   });
 
   console.log({ offerer: offerer.address, buyer: buyer.address });
   console.log({
@@ -206,13 +206,13 @@ async function main() {
     orderHash,
     value,
     orderStatus,
-    orderComponents: JSON.stringify(order),
+    orderComponents: JSON.stringify(orderComponents),
   });
-  console.log({ tx });
+  //   console.log({ tx });
 
-  const receipt = await tx.wait();
+  //   const receipt = await tx.wait();
 
-  console.log({ receipt });
+  //   console.log({ receipt });
 }
 
 main();

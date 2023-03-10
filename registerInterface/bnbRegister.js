@@ -405,42 +405,22 @@ async function renew(signer, name, duration) {
 }
 
 async function main() {
-  //   const signer = new ethers.Wallet(process.env.DEPLOYER, provider);
-
-  const name = "hello";
-  //   const owner = "0x8705f166792eeD5Be37b6573752C19F574CF05ac";
-
-  const duration = 1123213;
-  //   const secret = "0x44477c671ab6965484fd47e8002b558017d2d7c5f8080c78b9c6f6387cdd83d6";
-  //   const resolver = "0xE264d5bb84bA3b8061ADC38D3D76e6674aB91852";
-  //   const addr = "0x8705f166792eeD5Be37b6573752C19F574CF05ac";
-
-  //   await commit(signer, name, owner, secret, resolver, addr);
-  //   await register(signer, name, owner, duration, secret, resolver, addr);
-  //   const res = await renew(signer, name, duration);
-  //   console.log({ res });
-
   const provider = new ethers.getDefaultProvider(
     "https://eth-goerli.g.alchemy.com/v2/Zf0Pex_0WB4BkhBQCA14wnt4u6PAi6UF"
   );
+  const signer = new ethers.Wallet(process.env.DEPLOYER, provider);
 
-  //估计交易gas
-  const iface = new ethers.utils.Interface(ETHRegistrarControllerAbi);
-  const data = iface.encodeFunctionData("renew", [name, duration]);
-  console.log({ data });
+  const name = "testaaa121321312asedwqe";
+  const owner = "0x8705f166792eeD5Be37b6573752C19F574CF05ac";
+  //   1 year
+  const duration = 31556952;
+  const secret = "0x44477c671ab6965484fd47e8002b558017d2d7c5f8080c78b9c6f6387cdd83d6";
+  const resolver = "0xE264d5bb84bA3b8061ADC38D3D76e6674aB91852";
+  const addr = "0x8705f166792eeD5Be37b6573752C19F574CF05ac";
 
-  const res = await provider.estimateGas({
-    // Wrapped ETH address
-    to: "0x57f1887a8bf19b14fc0df6fd9b2acc9af147ea85",
-
-    // `function deposit() payable`
-    data: data,
-
-    // 1 ether
-    value: ethers.utils.parseEther("1.0"),
-  });
-
-  console.log({ res });
+  //   await commit(signer, name, owner, secret, resolver, addr);
+  //   await register(signer, name, owner, duration, secret, resolver, addr);
+  await renew(signer, name, duration);
 }
 
 main().catch((err) => {
